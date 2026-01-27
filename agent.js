@@ -1,7 +1,6 @@
 const axios = require("axios");
 const { createToolset } = require("./tools/tooling");
 const codingTools = require("./tools/coding");
-console.log(codingTools);
 const { tools, callTool } = createToolset(...codingTools);
 
 /**
@@ -21,22 +20,47 @@ async function callOpenAI(apiKey, messages, model = "gpt-5-nano-2025-08-07") {
       const { finish_reason } = choice;
       if (finish_reason === "tool_calls") {
         const { function: toolCall, id: callId } = choice.message.tool_calls[0];
-        console.log("Tool called:", toolCall);
+        const truncatedArgs =
+          JSON.stringify(toolCall.arguments).slice(0, 100) +
+          (JSON.stringify(toolCall.arguments).length > 100 ? "..." : "");
+        console.info("\n");
+        console.info("\x1b[36m~\x1b[0m".repeat(100));
+        console.info("\n");
         const toolOutput = callTool(toolCall.name, toolCall.arguments);
+        console.info(
+          "\n\n\x1b[36m%s\x1b[0m",
+          `Calling ${toolCall.name} with arguments ${truncatedArgs}`
+        );
+        console.info(
+          "\n\x1b[36m%s\x1b[0m",
+          "~~~   ",
+          "\x1b[36m~\x1b[0m".repeat(95)
+        );
+        console.info("\n\x1b[36m%s\x1b[0m", "   |/");
+        console.info("\n\x1b[36m%s\x1b[0m", "[°o°]\n");
         // todo make callTool return this schema
         const result = {
-          role: "user",
+          role: "user", // avoids assistant role which may trigger infinite tool calls
           type: "function_call_output",
           call_id: callId,
-          content: JSON.stringify({
+          content: `Tool call result: ${JSON.stringify({
             toolOutput,
-          }),
+          })}`,
         };
         toolCallResults.push(result);
       }
       if (finish_reason === "stop") {
         const agentMessage = choice.message.content;
-        console.info("\x1b[36m%s\x1b[0m", "[°_°] : ", choice.message.content);
+        console.info("\n\n");
+        console.info("\x1b[36m~\x1b[0m".repeat(100));
+        console.info("\n\n\x1b[36m%s\x1b[0m", agentMessage);
+        console.info(
+          "\n\x1b[36m%s\x1b[0m",
+          "~~~   ",
+          "\x1b[36m~\x1b[0m".repeat(95)
+        );
+        console.info("\n\x1b[36m%s\x1b[0m", "   |/");
+        console.info("\n\x1b[36m%s\x1b[0m", "[°_°]\n");
         // go back to user to get next input
         const conversationContext = [
           ...messages.filter((msg) => msg.role === "user"),
@@ -68,6 +92,16 @@ async function callOpenAI(apiKey, messages, model = "gpt-5-nano-2025-08-07") {
  */
 async function sendOpenAIRequest(url, apiKey, model, tools, messages) {
   try {
+    // console.info("\n\x1b[36m%s\x1b[0m", "[^_^] ? ");
+    process.stdout.write("\n\x1b[36m[^_°] hmm\x1b[0m");
+    let animateThink = true;
+    const intervalId = setInterval(() => {
+      if (!animateThink) {
+        clearInterval(intervalId);
+        return;
+      }
+      process.stdout.write("\x1b[36mm\x1b[0m");
+    }, 1000);
     const response = await axios.post(
       url,
       {
@@ -81,6 +115,7 @@ async function sendOpenAIRequest(url, apiKey, model, tools, messages) {
         },
       }
     );
+    animateThink = false;
     return response.data;
   } catch (error) {
     console.error(

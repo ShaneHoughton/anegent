@@ -33,7 +33,7 @@ async function runAgent() {
     const initMessages = [
       {
         role: "system",
-        content: "You are a helpful coding assistant.",
+        content: "You are a helpful coding assistant. Call a tool whenever you can to help the user with coding tasks. Avoid redundant tool calls.",
       },
     ];
     let conversationContext = null;
@@ -42,7 +42,7 @@ async function runAgent() {
       if (conversationContext) {
         messages.push(...conversationContext);
       }
-      const task = await getUserInput("\x1b[36m--> \x1b[0m");
+      const task = await getUserInput("\n\x1b[36m--> \x1b[0m");
       const prompt = formatPrompt(task);
       messages.push({
         role: "user",

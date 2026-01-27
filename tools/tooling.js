@@ -35,6 +35,13 @@ function createToolset(..._tools) {
     return acc;
   }, {});
   const tools = _tools.map((tool) => tool.definition);
+  console.info("\n")
+  _tools.forEach((tool) => {
+    console.info(
+      "Tool registered: ",
+      `\x1b[34m${tool.definition.function.name}\x1b[0m`
+    );
+  });
 
   function callTool(toolName, stringArgs) {
     if (functionsMap[toolName]) {
