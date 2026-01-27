@@ -65,9 +65,7 @@ function readFileContent({ filePath }) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`File does not exist: ${filePath}`);
   }
-
   const content = fs.readFileSync(filePath, "utf8");
-  console.log(`Content of file ${filePath}:`, content);
   return content;
 }
 
