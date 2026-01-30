@@ -33,25 +33,56 @@ async function runAgent() {
     const initMessages = [
       {
         role: "system",
-        content: "You are a helpful coding assistant. Call a tool whenever you can to help the user with coding tasks. Avoid redundant tool calls.",
+        content: [
+          "You are a helpful coding assistant",
+          "Always call a tool whenever you can to help the user with coding tasks",
+          "Do not call a tool if the user is asking a non-coding related question",
+          "Avoid redundant tool calls",
+        ].join("."),
       },
     ];
-    let conversationContext = null;
+
+    const MAX_TURNS = process.env.MAX_TURNS
+      ? parseInt(process.env.MAX_TURNS)
+      : 20;
+    const EXIT_COMMANDS = ["exit", "quit"];
+
+    let conversationContext = null; // previous turns: user messages + assistant response
+    let turns = 0;
+
     while (true) {
+      if (turns++ >= MAX_TURNS) {
+        console.log("Reached maximum turns. Exiting.");
+        break;
+      }
+
       const messages = [...initMessages];
-      if (conversationContext) {
+      if (conversationContext && conversationContext.length) {
         messages.push(...conversationContext);
       }
+
       const task = await getUserInput("\n\x1b[36m--> \x1b[0m");
+      const trimmedTask = (task || "").trim();
+      if (EXIT_COMMANDS.includes(trimmedTask.toLowerCase())) {
+        console.log("Exiting.");
+        break;
+      }
+
       const prompt = formatPrompt(task);
       messages.push({
         role: "user",
         content: prompt,
       });
-      conversationContext = await callOpenAI(apiKey, messages);
+
+      const nextContext = await callOpenAI(apiKey, messages);
+      if (!nextContext) {
+        console.error("No response from assistant. Exiting.");
+        break;
+      }
+      conversationContext = nextContext;
     }
   } catch (error) {
-    console.error("An error occurred:", error.message);
+    console.error("An error occurred:", error?.message);
   }
 }
 

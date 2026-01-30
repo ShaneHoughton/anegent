@@ -3,6 +3,52 @@ const { createToolset } = require("./tools/tooling");
 const codingTools = require("./tools/coding");
 const { tools, callTool } = createToolset(...codingTools);
 
+const colorLog = (artStr, color = "cyan") => {
+  const colorMap = {
+    red: 31,
+    green: 32,
+    yellow: 33,
+    blue: 34,
+    magenta: 35,
+    cyan: 36,
+    white: 37,
+  };
+  const selectedColor = colorMap[color] || colorMap["cyan"];
+  console.info("\n");
+  console.log(`\x1b[${selectedColor}m${artStr}\x1b[0m`);
+};
+
+function logAIResponse(config) {
+  if (!config) return;
+
+  colorLog(`~`.repeat(50));
+  if (config.text) colorLog(config.text);
+  switch (config.type) {
+    case "respond":
+      colorLog("[°_°]∫ ", "yellow");
+      break;
+    case "thinking":
+      colorLog("/[-_-]\\\n", "yellow");
+      process.stdout.write("\x1b[36mhm\x1b[0m");
+      let intervalId = setInterval(() => {
+        if (!config.shouldAnimate) {
+          clearInterval(intervalId);
+          return;
+        }
+        process.stdout.write("\x1b[36mm\x1b[0m");
+      }, 1000);
+      break;
+    case "action":
+      colorLog("[°o°]/", "yellow");
+      break;
+    case "error":
+      colorLog("\\[°x°]/", "yellow");
+      break;
+    default:
+      break;
+  }
+}
+
 /**
  * Makes an API call to OpenAI.
  * @param {string} apiKey - Your OpenAI API key.
@@ -19,55 +65,29 @@ async function callOpenAI(apiKey, messages, model = "gpt-5-nano-2025-08-07") {
     for (const choice of choices) {
       const { finish_reason } = choice;
       if (finish_reason === "tool_calls") {
-        const { function: toolCall, id: callId } = choice.message.tool_calls[0];
-        const truncatedArgs =
-          JSON.stringify(toolCall.arguments).slice(0, 100) +
-          (JSON.stringify(toolCall.arguments).length > 100 ? "..." : "");
-        console.info("\n");
-        console.info("\x1b[36m~\x1b[0m".repeat(100));
-        console.info("\n");
-        const toolOutput = callTool(toolCall.name, toolCall.arguments);
-        console.info(
-          "\n\n\x1b[36m%s\x1b[0m",
-          `Calling ${toolCall.name} with arguments ${truncatedArgs}`
-        );
-        console.info(
-          "\n\x1b[36m%s\x1b[0m",
-          "~~~   ",
-          "\x1b[36m~\x1b[0m".repeat(95)
-        );
-        console.info("\n\x1b[36m%s\x1b[0m", "   |/");
-        console.info("\n\x1b[36m%s\x1b[0m", "[°o°]\n");
-        // todo make callTool return this schema
-        const result = {
-          role: "user", // avoids assistant role which may trigger infinite tool calls
-          type: "function_call_output",
-          call_id: callId,
-          content: `Tool call result: ${JSON.stringify({
-            toolOutput,
-          })}`,
+        const { message } = choice;
+        const { function: toolCall, id: callId } = message.tool_calls[0];
+        const toolOutput = await callTool(toolCall.name, toolCall.arguments);
+        logAIResponse({
+          text: `I called ${toolCall.name}!`,
+          type: "action",
+        });
+        const functionMessage = {
+          role: "tool",
+          tool_call_id: callId,
+          content: JSON.stringify({ output: toolOutput }),
         };
-        toolCallResults.push(result);
+        toolCallResults.push(message);
+        toolCallResults.push(functionMessage);
       }
       if (finish_reason === "stop") {
         const agentMessage = choice.message.content;
-        console.info("\n\n");
-        console.info("\x1b[36m~\x1b[0m".repeat(100));
-        console.info("\n\n\x1b[36m%s\x1b[0m", agentMessage);
-        console.info(
-          "\n\x1b[36m%s\x1b[0m",
-          "~~~   ",
-          "\x1b[36m~\x1b[0m".repeat(95)
-        );
-        console.info("\n\x1b[36m%s\x1b[0m", "   |/");
-        console.info("\n\x1b[36m%s\x1b[0m", "[°_°]\n");
-        // go back to user to get next input
+        logAIResponse({ text: agentMessage, type: "respond" });
+        // removing tool messages before reprompting user to reduce context bloat and token use
+        // messages become user ask and agent reply
         const conversationContext = [
           ...messages.filter((msg) => msg.role === "user"),
-          {
-            role: "assistant",
-            content: agentMessage,
-          },
+          { role: "assistant", content: agentMessage },
         ];
         return conversationContext;
       }
@@ -76,8 +96,10 @@ async function callOpenAI(apiKey, messages, model = "gpt-5-nano-2025-08-07") {
       messages.push(...toolCallResults);
       return await callOpenAI(apiKey, messages, model);
     }
+    return null;
   } catch (error) {
-    console.error("Error calling OpenAI API:", error);
+    logAIResponse({ text: error, type: "error" });
+    return null;
   }
 }
 
@@ -91,17 +113,16 @@ async function callOpenAI(apiKey, messages, model = "gpt-5-nano-2025-08-07") {
  * @returns {Promise<Object>} - The response from the OpenAI API.
  */
 async function sendOpenAIRequest(url, apiKey, model, tools, messages) {
+  const timeout = process.env.OPENAI_TIMEOUT
+    ? parseInt(process.env.OPENAI_TIMEOUT)
+    : 1500000;
   try {
-    // console.info("\n\x1b[36m%s\x1b[0m", "[^_^] ? ");
-    process.stdout.write("\n\x1b[36m[^_°] hmm\x1b[0m");
-    let animateThink = true;
-    const intervalId = setInterval(() => {
-      if (!animateThink) {
-        clearInterval(intervalId);
-        return;
-      }
-      process.stdout.write("\x1b[36mm\x1b[0m");
-    }, 1000);
+    const animateThink = {
+      text: "Let's see...",
+      type: "thinking",
+      shouldAnimate: true,
+    };
+    logAIResponse(animateThink);
     const response = await axios.post(
       url,
       {
@@ -113,15 +134,12 @@ async function sendOpenAIRequest(url, apiKey, model, tools, messages) {
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },
+        timeout,
       }
     );
-    animateThink = false;
+    animateThink.shouldAnimate = false;
     return response.data;
   } catch (error) {
-    console.error(
-      "Error sending OpenAI request:",
-      error.response?.data || error.message
-    );
     throw error;
   }
 }

@@ -31,7 +31,7 @@ function updateFileContent({ filePath, newContent }) {
 
   // Update the file
   fs.writeFileSync(filePath, newContent, "utf8");
-  console.log(`File updated at: ${filePath}`);
+  console.info(`\nFile updated at: ${filePath}`);
   return readFileContent({ filePath });
 }
 
@@ -51,7 +51,7 @@ function listFiles({ dirPath }) {
     return fs.statSync(fullPath).isFile();
   });
 
-  console.log(`Files in directory ${dirPath}:`, files);
+  console.log(`\nFiles in directory ${dirPath}:`, files);
   return files;
 }
 
