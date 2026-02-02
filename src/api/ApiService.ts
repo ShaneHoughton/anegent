@@ -1,0 +1,45 @@
+import { IToolDefinition } from "../tools/toolHelper";
+
+type TAction = "message" | "tool_call" | "error";
+
+export interface IAppAction {
+  actionType: TAction;
+  message?: string;
+  toolCalls?: Array<{
+    toolName: string;
+    arguments: object;
+    callId: string;
+  }> | null;
+}
+export interface IAppResponse {
+  actions: IAppAction[];
+}
+
+export interface IAppRequest {
+  messages: Array<{
+    role: string;
+    content: string;
+  }>;
+  tools: Array<IToolDefinition>;
+}
+
+export abstract class Service<T> {
+  abstract RequestHandler(request: IAppRequest): Promise<T>;
+  abstract ResponseMapper(response: T): Promise<IAppResponse>;
+}
+
+export class AppServiceHandler<T> {
+  service?: Service<T>;
+
+  constructor(service: Service<T>) {
+    this.service = service;
+  }
+
+  async handleService(request: IAppRequest): Promise<IAppResponse> {
+    if (!this.service) {
+      throw new Error("Service not initialized");
+    }
+    const response = await this.service.RequestHandler(request);
+    return await this.service.ResponseMapper(response);
+  }
+}
