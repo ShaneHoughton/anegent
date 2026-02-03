@@ -1,27 +1,4 @@
-import { IToolDefinition } from "../tools/toolHelper";
-
-type TAction = "message" | "tool_call" | "error";
-
-export interface IAppAction {
-  actionType: TAction;
-  message?: string;
-  toolCalls?: Array<{
-    toolName: string;
-    arguments: object;
-    callId: string;
-  }> | null;
-}
-export interface IAppResponse {
-  actions: IAppAction[];
-}
-
-export interface IAppRequest {
-  messages: Array<{
-    role: string;
-    content: string;
-  }>;
-  tools: Array<IToolDefinition>;
-}
+import { IAppRequest, IAppResponse } from "./types";
 
 export abstract class Service<T> {
   abstract RequestHandler(request: IAppRequest): Promise<T>;

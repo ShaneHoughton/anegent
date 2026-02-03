@@ -1,11 +1,7 @@
 import ApiHandler from "../../ApiHandler";
-import { IOpenAIChatCompletionsResponse } from "./types";
-import {
-  Service,
-  IAppRequest,
-  IAppResponse,
-  IAppAction,
-} from "../../ApiService";
+import { IAppRequest, IAppResponse, IAppAction } from "../../types";
+import { IOpenAIChatCompletionsResponse } from "./types/index";
+import { Service } from "../../ApiService";
 
 class OpenAIService
   extends ApiHandler

@@ -1,26 +1,4 @@
-interface Parameter {
-  type: string;
-  description: string;
-  enum?: string[];
-}
-
-export interface IToolDefinition {
-  type: string;
-  function: {
-    name: any;
-    description: any;
-    parameters: {
-      type: string;
-      properties: any;
-      required: string[];
-    };
-  };
-}
-
-export interface ITool {
-  definition: IToolDefinition;
-  fn: (args: any) => any;
-}
+import { ITool, IToolDefinition, Parameter } from "./types";
 
 function createTool(
   name: string,
@@ -82,9 +60,9 @@ function createToolset(..._tools: ITool[]) {
     );
   });
 
-  function callTool(toolName: string, stringArgs: string): any {
+  async function callTool(toolName: string, args: any): Promise<any> {
     if (functionsMap[toolName]) {
-      return functionsMap[toolName](JSON.parse(stringArgs));
+      return await functionsMap[toolName](args);
     } else {
       throw new Error(`Tool "${toolName}" not found.`);
     }
@@ -94,3 +72,42 @@ function createToolset(..._tools: ITool[]) {
 }
 
 export { createTool, registerParameter, createToolset };
+
+// class ToolSet {
+//   tools: ITool[];
+//   functionsMap: Record<string, (args: any) => any> = {};
+
+//   constructor(tools: ITool[]) {
+//     this.tools = tools;
+//   }
+
+//   addTool(tool: ITool) {
+//     this.tools.push(tool);
+//     this.functionsMap[tool.definition.function.name] = tool.fn;
+//   }
+
+//   private createTool(
+//     name: string,
+//     description: string,
+//     parametersProps: Record<string, Parameter>,
+//     fn: (args: any) => any
+//   ): ITool {
+//     const requiredKeys = Object.keys(parametersProps);
+//     const definition: IToolDefinition = {
+//       type: "function",
+//       function: {
+//         name,
+//         description,
+//         parameters: {
+//           type: "object",
+//           properties: parametersProps,
+//           required: requiredKeys,
+//         },
+//       },
+//     };
+//     return {
+//       fn,
+//       definition,
+//     };
+//   }
+// }

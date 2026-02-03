@@ -1,12 +1,5 @@
 import axios from "axios";
 
-export interface IRequest {
-  url: string;
-  method: string;
-  headers: Record<string, string>;
-  body: any;
-}
-
 class ApiHandler {
   url: string;
   model: string;
