@@ -1,51 +1,60 @@
-import { IMessage } from "../types";
+import { IAppMessage } from "../types";
 import { AppServiceHandler } from "../api/ApiService";
-import { IAppRequest } from "../api/types";
-import { ITool, IToolDefinition } from "../tools/types";
-import { createToolset } from "../tools/toolHelper";
-
+import { IAppRequest, IToolCallData } from "../api/types";
+import { ToolSet } from "../tools/toolHelper";
 export abstract class AgentJob {
-  abstract handleContext(context: IMessage[]): IMessage[];
+  abstract handleContext(context: IAppMessage[]): IAppMessage[];
+  abstract onRespond(response: string): Promise<IAppMessage[]>;
 }
 
 export class Agent {
   systemPrompt: string;
   job: AgentJob;
   serviceHandler: AppServiceHandler<any>;
-  tools: IToolDefinition[];
-  toolHander: (toolName: string, args: any) => Promise<any>;
-  context: IMessage[] = [];
+  toolset: ToolSet;
+  context: IAppMessage[] = [];
 
   constructor(
     systemPrompt: string,
     job: AgentJob,
-    tools: ITool[],
-    serviceHandler: AppServiceHandler<any>
+    serviceHandler: AppServiceHandler<any>,
+    toolset?: ToolSet
   ) {
     this.systemPrompt = systemPrompt;
     this.job = job;
     this.serviceHandler = serviceHandler;
-    const toolset = createToolset(...tools);
-    this.tools = toolset.tools;
-    this.toolHander = toolset.callTool;
+    this.toolset = toolset ?? new ToolSet([]);
   }
 
-  async Act(prompt: string) {
-    const contextMessages = this.job.handleContext(this.context);
-    contextMessages.unshift({ role: "system", content: this.systemPrompt });
-    contextMessages.push({ role: "user", content: prompt });
+  async prompt(input: string) {
+    this.context.push({ role: "system", content: this.systemPrompt });
+    this.context.push({ role: "user", content: input });
+    const response = await this.Act(this.context);
+    // clear context
+    this.context = [];
+    return response;
+  }
 
-    const request: IAppRequest = {
-      messages: contextMessages,
-      tools: this.tools,
-    };
-    const { actions } = await this.serviceHandler.handleService(request);
+  async Act(
+    messages: IAppMessage[],
+    toolCallMessages: IAppMessage[] = [],
+    previousResponseData?: any
+  ): Promise<IAppMessage[]> {
+    const serviceResponse = await this.serviceHandler.handleRequest({
+      tools: this.toolset.toolDefinitions,
+      messages,
+      toolCallMessages: toolCallMessages,
+      previousResponseData,
+    });
+    const { appActions, responseData } = serviceResponse;
 
-    for (const action of actions) {
+    let toolMessages: IAppMessage[] = [];
+    for (const action of appActions) {
       const { actionType } = action;
       if (actionType === "message") {
         const message = action.message || "";
         console.log({ role: "assistant", content: message });
+        await this.job.onRespond(message);
         continue;
       }
       if (actionType === "tool_call") {
@@ -54,11 +63,17 @@ export class Agent {
           const { toolName, arguments: args, callId } = toolCall;
           console.log(`Calling tool: ${toolName} with args:`, args);
           try {
-            const result = await this.toolHander(toolName, args);
+            const result = await this.toolset.callTool(toolName, args);
             console.log(
               `Tool ${toolName} (callId: ${callId}) returned:`,
               result
             );
+            const toolMessage = {
+              role: "tool",
+              tool_call_id: callId,
+              content: JSON.stringify({ output: result }),
+            };
+            toolMessages.push(toolMessage);
           } catch (error) {
             console.error(
               `Error calling tool ${toolName} (callId: ${callId}):`,
@@ -69,5 +84,11 @@ export class Agent {
         continue;
       }
     }
+    // needs to take further action
+    if (toolMessages.length > 0) {
+      return await this.Act(messages, toolMessages, responseData);
+    }
+    // done
+    return this.job.handleContext(messages);
   }
 }

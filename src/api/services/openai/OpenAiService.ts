@@ -1,7 +1,7 @@
 import ApiHandler from "../../ApiHandler";
-import { IAppRequest, IAppResponse, IAppAction } from "../../types";
-import { IOpenAIChatCompletionsResponse } from "./types/index";
-import { Service } from "../../ApiService";
+import { IAppRequest, IAppAction, IToolCallData } from "../../types";
+import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "./types/index";
+import { Service, IServiceRequest, IServiceResponse } from "../../ApiService";
 
 class OpenAIService
   extends ApiHandler
@@ -10,18 +10,58 @@ class OpenAIService
   constructor(url: string, model: string, apiKey: string) {
     super(url, model, apiKey);
   }
+  async RequestHandler({
+    tools,
+    messages,
+    toolCallMessages,
+    previousResponseData,
+  }: IServiceRequest<IOpenAIChatCompletionsResponse>): Promise<IOpenAIChatCompletionsResponse> {
+    const openAIMessages: IOpenAIMessage[] = [];
+    openAIMessages.push(
+      ...messages.map((message) => ({
+        content: message.content,
+        role: message.role,
+      }))
+    );
+    if (previousResponseData && toolCallMessages) {
+      const { choices } = previousResponseData;
+      for (const choice of choices) {
+        const { finish_reason } = choice;
+        if (finish_reason === "tool_calls") {
+          const { message } = choice;
+          openAIMessages.push(message);
+        }
+      }
+      openAIMessages.push(...toolCallMessages);
+    }
+    const response = await this.makeRequest<IOpenAIChatCompletionsResponse>({
+      url: this.url,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: {
+        model: this.model,
+        messages: openAIMessages,
+        tools: tools,
+      },
+    });
+    return response;
+  }
 
-  async ResponseMapper(
-    response: IOpenAIChatCompletionsResponse
-  ): Promise<IAppResponse> {
-    const { choices } = response;
-    const actions: IAppAction[] = [];
+  async ResponseHandler(responseData: IOpenAIChatCompletionsResponse): Promise<{
+    appActions: IAppAction[];
+    responseData: IOpenAIChatCompletionsResponse;
+  }> {
+    const { choices } = responseData;
+    const appActions: IAppAction[] = [];
     for (const choice of choices) {
       const { finish_reason } = choice;
       if (finish_reason === "tool_calls") {
         const { tool_calls = [] } = choice.message;
         for (const toolCall of tool_calls) {
-          actions.push({
+          appActions.push({
             actionType: "tool_call",
             toolCalls: [
               {
@@ -35,32 +75,13 @@ class OpenAIService
       }
       if (finish_reason === "stop") {
         const agentMessage = choice.message.content || "";
-        actions.push({
+        appActions.push({
           actionType: "message",
           message: agentMessage,
         });
       }
     }
-    return { actions };
-  }
-
-  async RequestHandler(
-    appRequest: IAppRequest
-  ): Promise<IOpenAIChatCompletionsResponse> {
-    const response = await this.makeRequest<IOpenAIChatCompletionsResponse>({
-      url: this.url,
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-      },
-      body: {
-        model: this.model,
-        messages: appRequest.messages,
-        tools: appRequest.tools,
-      },
-    });
-    return response;
+    return { appActions, responseData };
   }
 }
 

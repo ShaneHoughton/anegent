@@ -1,4 +1,4 @@
-import { createTool, registerParameter } from "../toolHelper";
+import { ToolSet, createTool, registerParameter } from "../toolHelper";
 import {
   readFileContent,
   createNewFile,
@@ -76,5 +76,11 @@ const listFilesTool = createTool(
   }
 );
 
-const tools = [readFileTool, createFileTool, updateFileTool, listFilesTool];
-export default tools;
+const codingToolSet = new ToolSet([
+  readFileTool,
+  createFileTool,
+  updateFileTool,
+  listFilesTool,
+]);
+
+export default codingToolSet;

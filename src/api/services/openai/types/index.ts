@@ -1,3 +1,16 @@
+export interface IOpenAIMessage {
+  role: string;
+  content: string | null;
+  tool_calls?: {
+    id: string;
+    type: string;
+    function: {
+      name: string;
+      arguments: string;
+    };
+  }[];
+}
+
 export interface IOpenAIChatCompletionsResponse {
   id: string;
   object: string;
@@ -5,18 +18,7 @@ export interface IOpenAIChatCompletionsResponse {
   model: string;
   choices: {
     index: number;
-    message: {
-      role: string;
-      content: string | null;
-      tool_calls?: {
-        id: string;
-        type: string;
-        function: {
-          name: string;
-          arguments: string;
-        };
-      }[];
-    };
+    message: IOpenAIMessage;
     logprobs: any | null;
     finish_reason: string;
   }[];

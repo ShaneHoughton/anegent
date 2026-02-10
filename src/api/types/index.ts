@@ -1,5 +1,5 @@
 import { IToolDefinition } from "../../tools/types";
-import { IMessage } from "../../types";
+import { IAppMessage } from "../../types";
 
 export interface IRequest {
   url: string;
@@ -20,11 +20,12 @@ export interface IAppAction {
   }> | null;
 }
 
-export interface IAppResponse {
-  actions: IAppAction[];
+export interface IAppRequest {
+  messages: IAppMessage[];
+  tools: Array<IToolDefinition>;
 }
 
-export interface IAppRequest {
-  messages: IMessage[];
-  tools: Array<IToolDefinition>;
+export interface IToolCallData<T> {
+  toolCalls: IAppMessage[];
+  previousResponse: T;
 }
