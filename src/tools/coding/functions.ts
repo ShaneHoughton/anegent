@@ -38,7 +38,7 @@ export function updateFileContent({
   newContent: string;
 }) {
   if (!fs.existsSync(filePath)) {
-    throw new Error(`File does not exist: ${filePath}`);
+    throw new Error(`\nFile does not exist: ${filePath}`);
   }
 
   // Update the file
@@ -55,7 +55,7 @@ export function updateFileContent({
  */
 export function listFiles({ dirPath }: { dirPath: string }): string[] {
   if (!fs.existsSync(dirPath)) {
-    throw new Error(`Directory does not exist: ${dirPath}`);
+    throw new Error(`\nDirectory does not exist: ${dirPath}`);
   }
 
   const files = fs.readdirSync(dirPath).filter((file) => {
@@ -75,7 +75,7 @@ export function listFiles({ dirPath }: { dirPath: string }): string[] {
  */
 export function readFileContent({ filePath }: { filePath: string }): string {
   if (!fs.existsSync(filePath)) {
-    throw new Error(`File does not exist: ${filePath}`);
+    throw new Error(`\nFile does not exist: ${filePath}`);
   }
   const content = fs.readFileSync(filePath, "utf8");
   return content;

@@ -1,8 +1,9 @@
 import { IAppMessage } from "../types";
 import { AppServiceHandler } from "../api/ApiService";
-import { IAppRequest, IToolCallData } from "../api/types";
 import { ToolSet } from "../tools/toolHelper";
+import { logAIResponse, AIResponseConfig } from "../ui/CliArt";
 export abstract class AgentJob {
+  abstract greet(): string;
   abstract handleContext(context: IAppMessage[]): IAppMessage[];
   abstract onRespond(response: string): Promise<IAppMessage[]>;
 }
@@ -26,6 +27,10 @@ export class Agent {
     this.toolset = toolset ?? new ToolSet([]);
   }
 
+  logMessage(logConfig: AIResponseConfig) {
+    logAIResponse(logConfig);
+  }
+
   async prompt(input: string) {
     this.context.push({ role: "system", content: this.systemPrompt });
     this.context.push({ role: "user", content: input });
@@ -40,12 +45,19 @@ export class Agent {
     toolCallMessages: IAppMessage[] = [],
     previousResponseData?: any
   ): Promise<IAppMessage[]> {
+    const animateThink: AIResponseConfig = {
+      type: "thinking",
+      text: "Let's see...",
+      shouldAnimate: true,
+    };
+    this.logMessage(animateThink);
     const serviceResponse = await this.serviceHandler.handleRequest({
       tools: this.toolset.toolDefinitions,
       messages,
       toolCallMessages: toolCallMessages,
       previousResponseData,
     });
+    animateThink.shouldAnimate = false;
     const { appActions, responseData } = serviceResponse;
 
     let toolMessages: IAppMessage[] = [];
@@ -53,7 +65,7 @@ export class Agent {
       const { actionType } = action;
       if (actionType === "message") {
         const message = action.message || "";
-        console.log({ role: "assistant", content: message });
+        this.logMessage({ text: message, type: "respond" });
         await this.job.onRespond(message);
         continue;
       }
@@ -61,13 +73,12 @@ export class Agent {
         const toolCalls = action.toolCalls || [];
         for (const toolCall of toolCalls) {
           const { toolName, arguments: args, callId } = toolCall;
-          console.log(`Calling tool: ${toolName} with args:`, args);
           try {
             const result = await this.toolset.callTool(toolName, args);
-            console.log(
-              `Tool ${toolName} (callId: ${callId}) returned:`,
-              result
-            );
+            this.logMessage({
+              text: `I called ${toolName}!`,
+              type: "action",
+            });
             const toolMessage = {
               role: "tool",
               tool_call_id: callId,
@@ -75,10 +86,7 @@ export class Agent {
             };
             toolMessages.push(toolMessage);
           } catch (error) {
-            console.error(
-              `Error calling tool ${toolName} (callId: ${callId}):`,
-              error
-            );
+            this.logMessage({ text: JSON.stringify(error), type: "error" });
           }
         }
         continue;

@@ -5,6 +5,10 @@ import OpenAIServiceHander from "../api/services/openai/handler";
 // import ValidationAgent from "./ValidationAgent";
 
 class CodingAgentJob extends AgentJob {
+  greet() {
+    return "Hello! I'm your coding assistant. How can I help you today?";
+  }
+
   handleContext(context: IAppMessage[]): IAppMessage[] {
     return [...context];
   }
@@ -26,6 +30,7 @@ class CodingAgent extends Agent {
     ].join(".");
 
     super(systemPrompt, new CodingAgentJob(), OpenAIServiceHander, codingTools);
+    this.logMessage({ type: "respond", text: this.job.greet() });
   }
 }
 
