@@ -1,5 +1,10 @@
-export interface IAppMessage {
+export interface IAppMessage<T> {
   role: string;
-  content: string;
-  tool_call_id?: string;
+  content?: string;
+  toolCallInfo?: {
+    isComplete: boolean;
+    toolName: string;
+    args: Record<string, object>;
+  };
+  apiMessageData?: T;
 }

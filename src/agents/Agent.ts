@@ -2,24 +2,26 @@ import { IAppMessage } from "../types";
 import { AppServiceHandler } from "../api/ApiService";
 import { ToolSet } from "../tools/toolHelper";
 import { logAIResponse, AIResponseConfig } from "../ui/CliArt";
-export abstract class AgentJob {
+
+export abstract class AgentJob<TServiceMessage> {
   abstract greet(): string;
-  abstract handleContext(context: IAppMessage[]): IAppMessage[];
-  abstract onRespond(response: string): Promise<IAppMessage[]>;
+  abstract handleContext(
+    context: IAppMessage<TServiceMessage>[],
+  ): IAppMessage<TServiceMessage>[];
 }
 
-export class Agent {
+export class Agent<TResponse, TServiceMessage> {
   systemPrompt: string;
-  job: AgentJob;
-  serviceHandler: AppServiceHandler<any>;
+  job: AgentJob<TServiceMessage>;
+  serviceHandler: AppServiceHandler<TResponse, TServiceMessage>;
   toolset: ToolSet;
-  context: IAppMessage[] = [];
+  context: IAppMessage<TServiceMessage>[] = [];
 
   constructor(
     systemPrompt: string,
-    job: AgentJob,
-    serviceHandler: AppServiceHandler<any>,
-    toolset?: ToolSet
+    job: AgentJob<TServiceMessage>,
+    serviceHandler: AppServiceHandler<TResponse, TServiceMessage>,
+    toolset?: ToolSet,
   ) {
     this.systemPrompt = systemPrompt;
     this.job = job;
@@ -27,76 +29,70 @@ export class Agent {
     this.toolset = toolset ?? new ToolSet([]);
   }
 
-  logMessage(logConfig: AIResponseConfig) {
-    logAIResponse(logConfig);
+  displayMessage(messageConfig: AIResponseConfig) {
+    return logAIResponse({ ...messageConfig });
   }
 
-  async prompt(input: string) {
-    this.context.push({ role: "system", content: this.systemPrompt });
-    this.context.push({ role: "user", content: input });
-    const response = await this.Act(this.context);
-    // clear context
+  async prompt(userPrompt: string) {
+    const initialMessages = this.serviceHandler.formatPromptMessages(
+      userPrompt,
+      this.systemPrompt,
+    );
+    await this.act(initialMessages);
     this.context = [];
-    return response;
   }
 
-  async Act(
-    messages: IAppMessage[],
-    toolCallMessages: IAppMessage[] = [],
-    previousResponseData?: any
-  ): Promise<IAppMessage[]> {
-    const animateThink: AIResponseConfig = {
-      type: "thinking",
-      text: "Let's see...",
-      shouldAnimate: true,
-    };
-    this.logMessage(animateThink);
-    const serviceResponse = await this.serviceHandler.handleRequest({
-      tools: this.toolset.toolDefinitions,
+  async makeServiceRequest(messages: IAppMessage<TServiceMessage>[]) {
+    return await this.serviceHandler.request({
       messages,
-      toolCallMessages: toolCallMessages,
-      previousResponseData,
+      toolDefinitions: this.toolset.toolDefinitions,
     });
-    animateThink.shouldAnimate = false;
-    const { appActions, responseData } = serviceResponse;
+  }
 
-    let toolMessages: IAppMessage[] = [];
-    for (const action of appActions) {
-      const { actionType } = action;
-      if (actionType === "message") {
-        const message = action.message || "";
-        this.logMessage({ text: message, type: "respond" });
-        await this.job.onRespond(message);
-        continue;
-      }
-      if (actionType === "tool_call") {
-        const toolCalls = action.toolCalls || [];
-        for (const toolCall of toolCalls) {
-          const { toolName, arguments: args, callId } = toolCall;
-          try {
-            const result = await this.toolset.callTool(toolName, args);
-            this.logMessage({
-              text: `I called ${toolName}!`,
+  async act(messages: IAppMessage<TServiceMessage>[]) {
+    const cleanup = this.displayMessage({
+      type: "thinking",
+    });
+    const response = await this.makeServiceRequest(messages);
+    cleanup.cleanupInterval();
+
+    messages.push(...response);
+    let toolCallsReceived = false;
+    for (const message of messages) {
+      switch (message.role) {
+        case "tool_call":
+          if (message.toolCallInfo && message.apiMessageData) {
+            const { toolName, args, isComplete } = message.toolCallInfo;
+            if (isComplete) {
+              continue;
+            }
+
+            toolCallsReceived = true;
+            const toolCallResult = await this.toolset.callTool(toolName, args);
+
+            this.displayMessage({
               type: "action",
+              text: `Called tool ${toolName}...`,
             });
-            const toolMessage = {
-              role: "tool",
-              tool_call_id: callId,
-              content: JSON.stringify({ output: result }),
-            };
-            toolMessages.push(toolMessage);
-          } catch (error) {
-            this.logMessage({ text: JSON.stringify(error), type: "error" });
+
+            const toolMessage = this.serviceHandler.formatToolMessage(
+              JSON.stringify({ result: toolCallResult }),
+              message.apiMessageData,
+            );
+
+            message.toolCallInfo.isComplete = true;
+            messages.push(toolMessage);
           }
-        }
-        continue;
+          break;
+
+        case "assistant":
+          this.displayMessage({ type: "respond", text: message.content });
+          break;
       }
     }
-    // needs to take further action
-    if (toolMessages.length > 0) {
-      return await this.Act(messages, toolMessages, responseData);
+
+    if (toolCallsReceived) {
+      await this.act(messages);
     }
-    // done
-    return this.job.handleContext(messages);
   }
 }

@@ -2,25 +2,30 @@ import { IAppMessage } from "../types";
 import { AgentJob, Agent } from "./Agent";
 import codingTools from "../tools/coding";
 import OpenAIServiceHander from "../api/services/openai/handler";
-// import ValidationAgent from "./ValidationAgent";
+import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "../api/services/openai/types";
+import { IAppAction } from "../api/types";
 
-class CodingAgentJob extends AgentJob {
+class CodingAgentJob extends AgentJob<IOpenAIMessage> {
   greet() {
-    return "Hello! I'm your coding assistant. How can I help you today?";
+    return "Hello there! I'm your coding assistant. How can I help you today?";
   }
 
-  handleContext(context: IAppMessage[]): IAppMessage[] {
+  handleContext(context: IAppMessage<IOpenAIMessage>[]): IAppMessage<IOpenAIMessage>[] {
     return [...context];
   }
 
-  async onRespond(response: string): Promise<IAppMessage[]> {
-    const messages: IAppMessage[] = [];
+  async onRespond(response: string): Promise<IAppMessage<IOpenAIMessage>[]> {
+    const messages: IAppMessage<IOpenAIMessage>[] = [];
     messages.push({ role: "assistant", content: response });
     return messages;
   }
+
+  onToolCall(response: IAppAction): Promise<IAppAction> | IAppAction {
+    return response;
+  }
 }
 
-class CodingAgent extends Agent {
+class CodingAgent extends Agent<IOpenAIChatCompletionsResponse, IOpenAIMessage> {
   constructor() {
     const systemPrompt = [
       "You are a helpful coding assistant",
@@ -30,7 +35,7 @@ class CodingAgent extends Agent {
     ].join(".");
 
     super(systemPrompt, new CodingAgentJob(), OpenAIServiceHander, codingTools);
-    this.logMessage({ type: "respond", text: this.job.greet() });
+    this.displayMessage({ type: "respond", text: this.job.greet() });
   }
 }
 

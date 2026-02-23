@@ -20,8 +20,12 @@ export interface AIResponseConfig {
 }
 
 export function logAIResponse(config: AIResponseConfig) {
-  if (!config) return;
-
+  let intervalId: NodeJS.Timeout | null = null;
+  const cleanupInterval = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
   colorLog(`~`.repeat(50));
   if (config.text) colorLog(config.text);
   switch (config.type) {
@@ -31,11 +35,7 @@ export function logAIResponse(config: AIResponseConfig) {
     case "thinking":
       colorLog("/[-_-]\\\n", "yellow");
       process.stdout.write("\x1b[36mhm\x1b[0m");
-      let intervalId = setInterval(() => {
-        if (!config.shouldAnimate) {
-          clearInterval(intervalId);
-          return;
-        }
+      intervalId = setInterval(() => {
         process.stdout.write("\x1b[36mm\x1b[0m");
       }, 1000);
       break;
@@ -48,4 +48,5 @@ export function logAIResponse(config: AIResponseConfig) {
     default:
       break;
   }
+  return { cleanupInterval };
 }

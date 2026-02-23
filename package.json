@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ane": "node agentRunner.js",
+    "ane": "npx ts-node src/index.ts",
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "npx ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",

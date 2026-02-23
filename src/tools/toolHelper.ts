@@ -44,6 +44,7 @@ export function registerParameter(
 export class ToolSet {
   tools: ITool[] = [];
   functionsMap: Record<string, (args: any) => any> = {};
+  private cachedToolDefinitions: IToolDefinition[] | null = null;
 
   constructor(tools: ITool[]) {
     tools.forEach((tool) => this.addTool(tool));
@@ -52,6 +53,7 @@ export class ToolSet {
   addTool(tool: ITool) {
     this.tools.push(tool);
     this.functionsMap[tool.definition.function.name] = tool.fn;
+    this.cachedToolDefinitions = null;
   }
 
   callTool(toolName: string, args: any): any {
@@ -63,6 +65,9 @@ export class ToolSet {
   }
 
   get toolDefinitions(): IToolDefinition[] {
-    return this.tools.map((tool) => tool.definition);
+    if (!this.cachedToolDefinitions) {
+      this.cachedToolDefinitions = this.tools.map((tool) => tool.definition);
+    }
+    return this.cachedToolDefinitions;
   }
 }

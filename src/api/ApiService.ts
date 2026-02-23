@@ -1,38 +1,78 @@
-import { IAppAction, IAppRequest, IToolCallData } from "./types";
 import { IAppMessage } from "../types";
 import { IToolDefinition } from "../tools/types";
 
-export interface IServiceRequest<T> {
-  tools: IToolDefinition[];
-  messages: IAppMessage[];
-  toolCallMessages?: IAppMessage[];
-  previousResponseData?: T;
+export interface IServiceRequest<TServiceMessage> {
+  messages: IAppMessage<TServiceMessage>[];
+  toolDefinitions: IToolDefinition[];
 }
 
-export interface IServiceResponse<T> {
-  appActions: IAppAction[];
-  responseData: T;
-}
-export abstract class Service<T> {
-  abstract RequestHandler(requestData: IServiceRequest<T>): Promise<T>;
-
-  abstract ResponseHandler(responseData: T): Promise<IServiceResponse<T>>;
+export interface IServiceResponse<TServiceMessage> {
+  messages: IAppMessage<TServiceMessage>[];
 }
 
-export class AppServiceHandler<T> {
-  service?: Service<T>;
+export abstract class Service<TResponse, TServiceMessage> {
+  abstract handleRequest(
+    requestData: IServiceRequest<TServiceMessage>,
+  ): Promise<TResponse>;
 
-  constructor(service: Service<T>) {
+  abstract handleResponse(
+    responseData: TResponse,
+  ): Promise<IAppMessage<TServiceMessage>[]>;
+
+  abstract mapPromptToServiceMessages({
+    userPrompt,
+    systemPrompt,
+  }: {
+    userPrompt: string;
+    systemPrompt: string;
+  }): IAppMessage<TServiceMessage>[];
+
+  abstract mapToolCallToServiceMessage({
+    content,
+    apiMessageData,
+  }: {
+    content: string;
+    apiMessageData: TServiceMessage;
+  }): IAppMessage<TServiceMessage>;
+}
+
+export class AppServiceHandler<TResponse, TServiceMessage> {
+  service?: Service<TResponse, TServiceMessage>;
+
+  constructor(service: Service<TResponse, TServiceMessage>) {
     this.service = service;
   }
 
-  async handleRequest(
-    request: IServiceRequest<T>
-  ): Promise<IServiceResponse<T>> {
+  formatPromptMessages(
+    userPrompt: string,
+    systemPrompt: string,
+  ): IAppMessage<TServiceMessage>[] {
     if (!this.service) {
       throw new Error("Service not initialized");
     }
-    const response = await this.service.RequestHandler(request);
-    return await this.service.ResponseHandler(response);
+    return this.service?.mapPromptToServiceMessages({
+      userPrompt,
+      systemPrompt,
+    });
+  }
+
+  formatToolMessage(content: string, apiMessageData: TServiceMessage) {
+    if (!this.service) {
+      throw new Error("Service not initialized");
+    }
+    return this.service?.mapToolCallToServiceMessage({
+      content,
+      apiMessageData,
+    });
+  }
+
+  async request(
+    serviceRequest: IServiceRequest<TServiceMessage>,
+  ): Promise<IAppMessage<TServiceMessage>[]> {
+    if (!this.service) {
+      throw new Error("Service not initialized");
+    }
+    const response = await this.service.handleRequest(serviceRequest);
+    return await this.service.handleResponse(response);
   }
 }
