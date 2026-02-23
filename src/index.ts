@@ -7,6 +7,8 @@ const EXIT_COMMANDS = ["exit", "quit"];
 
 /**
  * Prompts the user for input and returns the response.
+ * @param {string} prompt - The prompt text to display to the user
+ * @returns {Promise<string>} Promise that resolves with the user's input
  */
 function getUserInput(prompt: string) {
   const rl = readline.createInterface({
@@ -24,6 +26,7 @@ function getUserInput(prompt: string) {
 
 /**
  * Main application loop for the coding agent.
+ * @returns {Promise<void>}
  */
 const main = async () => {
   const agent = new CodingAgent();

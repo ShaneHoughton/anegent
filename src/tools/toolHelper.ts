@@ -2,6 +2,11 @@ import { ITool, IToolDefinition, Parameter } from "./types";
 
 /**
  * Creates a tool definition with its function implementation.
+ * @param {string} name - The name of the tool
+ * @param {string} description - Description of what the tool does
+ * @param {Record<string, Parameter>} parametersProps - The tool's parameter definitions
+ * @param {function} fn - The function to execute when the tool is called
+ * @returns {ITool} The complete tool object with definition and function
  */
 export function createTool(
   name: string,
@@ -30,6 +35,11 @@ export function createTool(
 
 /**
  * Registers a parameter with its type and description.
+ * @param {string} name - The parameter name
+ * @param {string} type - The parameter type (e.g., "string", "number")
+ * @param {string} description - Description of the parameter
+ * @param {string[]} [enumValues] - Optional array of allowed values
+ * @returns {Record<string, Parameter>} Object mapping parameter name to its definition
  */
 export function registerParameter(
   name: string,
@@ -57,6 +67,7 @@ export class ToolSet {
 
   /**
    * Creates a new toolset with the given tools.
+   * @param {ITool[]} tools - Array of tools to include in the toolset
    */
   constructor(tools: ITool[]) {
     tools.forEach((tool) => this.addTool(tool));
@@ -64,6 +75,7 @@ export class ToolSet {
 
   /**
    * Adds a tool to the toolset.
+   * @param {ITool} tool - The tool to add
    */
   addTool(tool: ITool) {
     this.tools.push(tool);
@@ -73,6 +85,9 @@ export class ToolSet {
 
   /**
    * Executes a tool by name with the given arguments.
+   * @param {string} toolName - The name of the tool to execute
+   * @param {any} args - Arguments to pass to the tool
+   * @returns {any} The result from the tool execution
    */
   callTool(toolName: string, args: any): any {
     if (this.functionsMap[toolName]) {
@@ -84,6 +99,7 @@ export class ToolSet {
 
   /**
    * Returns all tool definitions in the toolset.
+   * @returns {IToolDefinition[]} Array of tool definitions
    */
   get toolDefinitions(): IToolDefinition[] {
     if (!this.cachedToolDefinitions) {

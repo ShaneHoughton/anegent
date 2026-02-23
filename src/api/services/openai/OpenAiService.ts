@@ -12,6 +12,9 @@ class OpenAIService
 {
   /**
    * Creates a new OpenAI service instance.
+   * @param {string} url - The OpenAI API endpoint URL
+   * @param {string} model - The model identifier to use (e.g., "gpt-4")
+   * @param {string} apiKey - The OpenAI API authentication key
    */
   constructor(url: string, model: string, apiKey: string) {
     super(url, model, apiKey);
@@ -19,6 +22,10 @@ class OpenAIService
 
   /**
    * Maps user and system prompts to OpenAI message format.
+   * @param {Object} params - The prompts to map
+   * @param {string} params.userPrompt - The user's input prompt
+   * @param {string} params.systemPrompt - The system prompt to guide behavior
+   * @returns {IAppMessage<IOpenAIMessage>[]} Array of formatted OpenAI messages
    */
   mapPromptToServiceMessages({
     userPrompt,
@@ -49,6 +56,10 @@ class OpenAIService
 
   /**
    * Maps tool call results to OpenAI message format.
+   * @param {Object} params - The tool call data to map
+   * @param {string} params.content - The result content from the tool execution
+   * @param {IToolCallInfo} params.toolCallInfo - Information about the tool call
+   * @returns {IAppMessage<IOpenAIMessage>} Formatted tool result message
    */
   mapToolCallToServiceMessage({
     content,
@@ -70,6 +81,10 @@ class OpenAIService
 
   /**
    * Sends a request to the OpenAI API.
+   * @param {IServiceRequest<IOpenAIMessage>} params - The request data
+   * @param {IAppMessage<IOpenAIMessage>[]} params.messages - Messages to send
+   * @param {IToolDefinition[]} params.toolDefinitions - Available tool definitions
+   * @returns {Promise<IOpenAIChatCompletionsResponse>} The API response
    */
   async handleRequest({
     messages,
@@ -96,6 +111,8 @@ class OpenAIService
 
   /**
    * Processes the OpenAI API response into application messages.
+   * @param {IOpenAIChatCompletionsResponse} responseData - The raw OpenAI API response
+   * @returns {Promise<IAppMessage<IOpenAIMessage>[]>} Array of formatted application messages
    */
   async handleResponse(
     responseData: IOpenAIChatCompletionsResponse,

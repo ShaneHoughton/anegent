@@ -9,10 +9,13 @@ import { logAIResponse, AIResponseConfig } from "../ui/CliArt";
 export abstract class AgentJob<TServiceMessage> {
   /**
    * Returns a greeting message for the agent.
+   * @returns {string} The greeting message
    */
   abstract greet(): string;
   /**
    * Handles and processes the message context.
+   * @param {IAppMessage<TServiceMessage>[]} context - Array of messages to process
+   * @returns {IAppMessage<TServiceMessage>[]} Processed array of messages
    */
   abstract handleContext(
     context: IAppMessage<TServiceMessage>[],
@@ -31,6 +34,10 @@ export class Agent<TResponse, TServiceMessage> {
 
   /**
    * Creates a new agent instance.
+   * @param {string} systemPrompt - The system prompt to guide agent behavior
+   * @param {AgentJob<TServiceMessage>} job - The job implementation defining agent behavior
+   * @param {AppServiceHandler<TResponse, TServiceMessage>} serviceHandler - Handler for AI service interactions
+   * @param {ToolSet} [toolset] - Optional set of tools available to the agent
    */
   constructor(
     systemPrompt: string,
@@ -46,6 +53,8 @@ export class Agent<TResponse, TServiceMessage> {
 
   /**
    * Displays a message to the user interface.
+   * @param {AIResponseConfig} messageConfig - Configuration for the message display
+   * @returns {Object} Object with cleanupInterval method to stop animations
    */
   displayMessage(messageConfig: AIResponseConfig) {
     return logAIResponse({ ...messageConfig });
@@ -53,6 +62,8 @@ export class Agent<TResponse, TServiceMessage> {
 
   /**
    * Processes a user prompt and executes the agent workflow.
+   * @param {string} userPrompt - The user's input prompt
+   * @returns {Promise<void>}
    */
   async prompt(userPrompt: string) {
     const initialMessages = this.serviceHandler.formatPromptMessages(
@@ -65,6 +76,8 @@ export class Agent<TResponse, TServiceMessage> {
 
   /**
    * Makes a request to the AI service with the current messages.
+   * @param {IAppMessage<TServiceMessage>[]} messages - Messages to send to the AI service
+   * @returns {Promise<IAppMessage<TServiceMessage>[]>} Response messages from the AI service
    */
   async makeServiceRequest(messages: IAppMessage<TServiceMessage>[]) {
     return await this.serviceHandler.request({
@@ -75,6 +88,8 @@ export class Agent<TResponse, TServiceMessage> {
 
   /**
    * Executes agent actions including tool calls and message processing.
+   * @param {IAppMessage<TServiceMessage>[]} messages - Messages to process
+   * @returns {Promise<void>}
    */
   async act(messages: IAppMessage<TServiceMessage>[]) {
     const cleanup = this.displayMessage({

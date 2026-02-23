@@ -1,5 +1,10 @@
 /**
  * Creates a tool definition with its function implementation.
+ * @param {string} name - The name of the tool
+ * @param {string} description - Description of what the tool does
+ * @param {Object} parametersProps - The tool's parameter definitions
+ * @param {Function} fn - The function to execute when the tool is called
+ * @returns {Object} The complete tool object with definition and function
  */
 function createTool(name, description, parametersProps, fn) {
   const requiredKeys = Object.keys(parametersProps);
@@ -23,6 +28,11 @@ function createTool(name, description, parametersProps, fn) {
 
 /**
  * Registers a parameter with its type and description.
+ * @param {string} name - The parameter name
+ * @param {string} type - The parameter type (e.g., "string", "number")
+ * @param {string} description - Description of the parameter
+ * @param {string[]} [enumValues=[]] - Optional array of allowed values
+ * @returns {Object} Object mapping parameter name to its definition
  */
 function registerParameter(name, type, description, enumValues = []) {
   const parameter = {
@@ -37,6 +47,8 @@ function registerParameter(name, type, description, enumValues = []) {
 
 /**
  * Creates a toolset with the given tools and provides tool execution.
+ * @param {...Object} _tools - Variable number of tool objects to include
+ * @returns {Object} Object with tools array and callTool function
  */
 function createToolset(..._tools) {
   const functionsMap = _tools.reduce((acc, tool) => {
@@ -54,6 +66,9 @@ function createToolset(..._tools) {
 
   /**
    * Executes a tool by name with the given arguments.
+   * @param {string} toolName - The name of the tool to execute
+   * @param {string} stringArgs - JSON string of arguments to pass to the tool
+   * @returns {*} The result from the tool execution
    */
   function callTool(toolName, stringArgs) {
     if (functionsMap[toolName]) {

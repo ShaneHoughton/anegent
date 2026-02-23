@@ -1,5 +1,7 @@
 /**
  * Logs colored text to the console.
+ * @param {string} artStr - The text to display
+ * @param {string} [color="cyan"] - The color name for the text
  */
 const colorLog = (artStr: string, color = "cyan") => {
   const colorMap: { [key: string]: number } = {
@@ -24,6 +26,11 @@ export interface AIResponseConfig {
 
 /**
  * Displays AI responses with visual formatting and animations.
+ * @param {AIResponseConfig} config - Configuration for the response display
+ * @param {string} config.type - The type of response (respond, thinking, action, error)
+ * @param {string} [config.text] - Optional text message to display
+ * @param {boolean} [config.shouldAnimate] - Whether to show animations
+ * @returns {Object} Object with cleanupInterval method to stop animations
  */
 export function logAIResponse(config: AIResponseConfig) {
   let intervalId: NodeJS.Timeout | null = null;

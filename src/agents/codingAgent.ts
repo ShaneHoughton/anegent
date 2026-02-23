@@ -10,6 +10,7 @@ import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "../api/services/
 class CodingAgentJob extends AgentJob<IOpenAIMessage> {
   /**
    * Returns the greeting message for the coding agent.
+   * @returns {string} The greeting message
    */
   greet() {
     return "Hello there! I'm your coding assistant. How can I help you today?";
@@ -17,6 +18,8 @@ class CodingAgentJob extends AgentJob<IOpenAIMessage> {
 
   /**
    * Handles the context for the coding agent.
+   * @param {IAppMessage<IOpenAIMessage>[]} context - Array of messages to process
+   * @returns {IAppMessage<IOpenAIMessage>[]} Processed array of messages
    */
   handleContext(context: IAppMessage<IOpenAIMessage>[]): IAppMessage<IOpenAIMessage>[] {
     return [...context];
@@ -24,6 +27,8 @@ class CodingAgentJob extends AgentJob<IOpenAIMessage> {
 
   /**
    * Processes agent responses.
+   * @param {string} response - The response text from the agent
+   * @returns {Promise<IAppMessage<IOpenAIMessage>[]>} Array of message objects
    */
   async onRespond(response: string): Promise<IAppMessage<IOpenAIMessage>[]> {
     const messages: IAppMessage<IOpenAIMessage>[] = [];
