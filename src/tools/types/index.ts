@@ -7,11 +7,11 @@ export interface Parameter {
 export interface IToolDefinition {
   type: string;
   function: {
-    name: any;
-    description: any;
+    name: string;
+    description: string;
     parameters: {
       type: string;
-      properties: any;
+      properties: Record<string, Parameter>;
       required: string[];
     };
   };

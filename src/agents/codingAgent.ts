@@ -3,7 +3,6 @@ import { AgentJob, Agent } from "./Agent";
 import codingTools from "../tools/coding";
 import OpenAIServiceHander from "../api/services/openai/handler";
 import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "../api/services/openai/types";
-import { IAppAction } from "../api/types";
 
 class CodingAgentJob extends AgentJob<IOpenAIMessage> {
   greet() {
@@ -18,10 +17,6 @@ class CodingAgentJob extends AgentJob<IOpenAIMessage> {
     const messages: IAppMessage<IOpenAIMessage>[] = [];
     messages.push({ role: "assistant", content: response });
     return messages;
-  }
-
-  onToolCall(response: IAppAction): Promise<IAppAction> | IAppAction {
-    return response;
   }
 }
 
