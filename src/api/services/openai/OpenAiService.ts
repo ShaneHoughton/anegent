@@ -3,14 +3,23 @@ import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "./types/index";
 import { Service, IServiceRequest } from "../../ApiService";
 import { IAppMessage, IToolCallInfo } from "../../../types";
 
+/**
+ * OpenAI service implementation for chat completions.
+ */
 class OpenAIService
   extends ApiHandler
   implements Service<IOpenAIChatCompletionsResponse, IOpenAIMessage>
 {
+  /**
+   * Creates a new OpenAI service instance.
+   */
   constructor(url: string, model: string, apiKey: string) {
     super(url, model, apiKey);
   }
 
+  /**
+   * Maps user and system prompts to OpenAI message format.
+   */
   mapPromptToServiceMessages({
     userPrompt,
     systemPrompt,
@@ -38,6 +47,9 @@ class OpenAIService
     ];
   }
 
+  /**
+   * Maps tool call results to OpenAI message format.
+   */
   mapToolCallToServiceMessage({
     content,
     toolCallInfo,
@@ -56,6 +68,9 @@ class OpenAIService
     };
   }
 
+  /**
+   * Sends a request to the OpenAI API.
+   */
   async handleRequest({
     messages,
     toolDefinitions,
@@ -79,6 +94,9 @@ class OpenAIService
     return response;
   }
 
+  /**
+   * Processes the OpenAI API response into application messages.
+   */
   async handleResponse(
     responseData: IOpenAIChatCompletionsResponse,
   ): Promise<IAppMessage<IOpenAIMessage>[]> {

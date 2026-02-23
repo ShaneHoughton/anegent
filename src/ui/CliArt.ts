@@ -1,3 +1,6 @@
+/**
+ * Logs colored text to the console.
+ */
 const colorLog = (artStr: string, color = "cyan") => {
   const colorMap: { [key: string]: number } = {
     red: 31,
@@ -19,6 +22,9 @@ export interface AIResponseConfig {
   shouldAnimate?: boolean;
 }
 
+/**
+ * Displays AI responses with visual formatting and animations.
+ */
 export function logAIResponse(config: AIResponseConfig) {
   let intervalId: NodeJS.Timeout | null = null;
   const cleanupInterval = () => {

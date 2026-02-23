@@ -1,3 +1,6 @@
+/**
+ * Creates a tool definition with its function implementation.
+ */
 function createTool(name, description, parametersProps, fn) {
   const requiredKeys = Object.keys(parametersProps);
   const definition = {
@@ -18,6 +21,9 @@ function createTool(name, description, parametersProps, fn) {
   };
 }
 
+/**
+ * Registers a parameter with its type and description.
+ */
 function registerParameter(name, type, description, enumValues = []) {
   const parameter = {
     type,
@@ -29,6 +35,9 @@ function registerParameter(name, type, description, enumValues = []) {
   return { [name]: parameter };
 }
 
+/**
+ * Creates a toolset with the given tools and provides tool execution.
+ */
 function createToolset(..._tools) {
   const functionsMap = _tools.reduce((acc, tool) => {
     acc[tool.definition.function.name] = tool.fn;
@@ -43,6 +52,9 @@ function createToolset(..._tools) {
     );
   });
 
+  /**
+   * Executes a tool by name with the given arguments.
+   */
   function callTool(toolName, stringArgs) {
     if (functionsMap[toolName]) {
       return functionsMap[toolName](JSON.parse(stringArgs));

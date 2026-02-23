@@ -1,16 +1,25 @@
 import axios from "axios";
 
+/**
+ * Handles API requests to external services.
+ */
 class ApiHandler {
   url: string;
   model: string;
   apiKey: string;
 
+  /**
+   * Creates a new API handler instance.
+   */
   constructor(url: string, model: string, apiKey: string) {
     this.url = url;
     this.model = model;
     this.apiKey = apiKey;
   }
 
+  /**
+   * Makes an HTTP request to the specified endpoint.
+   */
   async makeRequest<T>(
     request: {
       url: string;

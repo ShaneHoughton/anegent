@@ -5,6 +5,9 @@ import CodingAgent from "./agents/codingAgent";
 
 const EXIT_COMMANDS = ["exit", "quit"];
 
+/**
+ * Prompts the user for input and returns the response.
+ */
 function getUserInput(prompt: string) {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -19,6 +22,9 @@ function getUserInput(prompt: string) {
   });
 }
 
+/**
+ * Main application loop for the coding agent.
+ */
 const main = async () => {
   const agent = new CodingAgent();
   while (true) {
