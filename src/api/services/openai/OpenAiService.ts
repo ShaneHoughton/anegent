@@ -95,6 +95,7 @@ class OpenAIService
               callId: toolCall.id,
               isComplete: false,
               toolName: toolCall.function.name,
+              // could maybe pass down stringified args and parse them in the tool call handler to avoid issues
               args: JSON.parse(toolCall.function.arguments),
             },
             apiMessageData: message,
