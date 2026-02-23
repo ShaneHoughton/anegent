@@ -1,4 +1,4 @@
-import { IAppMessage } from "../types";
+import { IAppMessage, IToolCallInfo } from "../types";
 import { AppServiceHandler } from "../api/ApiService";
 import { ToolSet } from "../tools/toolHelper";
 import { logAIResponse, AIResponseConfig } from "../ui/CliArt";
@@ -62,7 +62,8 @@ export class Agent<TResponse, TServiceMessage> {
       switch (message.role) {
         case "tool_call":
           if (message.toolCallInfo && message.apiMessageData) {
-            const { toolName, args, isComplete } = message.toolCallInfo;
+            const { toolCallInfo } = message;
+            const { toolName, args, isComplete } = toolCallInfo;
             if (isComplete) {
               continue;
             }
@@ -77,7 +78,7 @@ export class Agent<TResponse, TServiceMessage> {
 
             const toolMessage = this.serviceHandler.formatToolMessage(
               JSON.stringify({ result: toolCallResult }),
-              message.apiMessageData,
+              toolCallInfo,
             );
 
             message.toolCallInfo.isComplete = true;

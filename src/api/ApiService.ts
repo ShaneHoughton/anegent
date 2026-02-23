@@ -1,4 +1,4 @@
-import { IAppMessage } from "../types";
+import { IAppMessage, IToolCallInfo } from "../types";
 import { IToolDefinition } from "../tools/types";
 
 export interface IServiceRequest<TServiceMessage> {
@@ -29,10 +29,10 @@ export abstract class Service<TResponse, TServiceMessage> {
 
   abstract mapToolCallToServiceMessage({
     content,
-    apiMessageData,
+    toolCallInfo,
   }: {
     content: string;
-    apiMessageData: TServiceMessage;
+    toolCallInfo: IToolCallInfo;
   }): IAppMessage<TServiceMessage>;
 }
 
@@ -56,13 +56,13 @@ export class AppServiceHandler<TResponse, TServiceMessage> {
     });
   }
 
-  formatToolMessage(content: string, apiMessageData: TServiceMessage) {
+  formatToolMessage(content: string, toolCallInfo: IToolCallInfo) {
     if (!this.service) {
       throw new Error("Service not initialized");
     }
     return this.service?.mapToolCallToServiceMessage({
       content,
-      apiMessageData,
+      toolCallInfo,
     });
   }
 

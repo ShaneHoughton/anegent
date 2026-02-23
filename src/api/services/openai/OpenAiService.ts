@@ -1,7 +1,7 @@
 import ApiHandler from "../../ApiHandler";
 import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "./types/index";
 import { Service, IServiceRequest } from "../../ApiService";
-import { IAppMessage } from "../../../types";
+import { IAppMessage, IToolCallInfo } from "../../../types";
 
 class OpenAIService
   extends ApiHandler
@@ -40,20 +40,17 @@ class OpenAIService
 
   mapToolCallToServiceMessage({
     content,
-    apiMessageData,
+    toolCallInfo,
   }: {
     content: string;
-    apiMessageData: IOpenAIMessage;
+    toolCallInfo: IToolCallInfo;
   }): IAppMessage<IOpenAIMessage> {
-    if (!apiMessageData.tool_calls || apiMessageData.tool_calls.length === 0) {
-      throw new Error("No tool call info found in apiMessageData");
-    }
     return {
       role: "tool",
       content,
       apiMessageData: {
         role: "tool",
-        tool_call_id: apiMessageData.tool_calls?.[0].id,
+        tool_call_id: toolCallInfo.callId,
         content,
       },
     };
@@ -95,6 +92,7 @@ class OpenAIService
           messages.push({
             role: "tool_call",
             toolCallInfo: {
+              callId: toolCall.id,
               isComplete: false,
               toolName: toolCall.function.name,
               args: JSON.parse(toolCall.function.arguments),
