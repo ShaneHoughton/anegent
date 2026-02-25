@@ -5,6 +5,7 @@ const path = require("path");
  * Creates a new file with the specified content.
  * @param {string} filePath - The path of the file to create.
  * @param {string} content - The content to write to the file.
+ * @returns {string} The content of the created file
  * createNewFile("./output/newFile.txt", "Hello, world!");
  */
 function createNewFile({ filePath, content = "" }) {
@@ -22,6 +23,7 @@ function createNewFile({ filePath, content = "" }) {
  * Updates the content of an existing file.
  * @param {string} filePath - The path of the file to update.
  * @param {string} newContent - The new content to write to the file.
+ * @returns {string} The updated content of the file
  * updateFileContent("./output/newFile.txt", "Updated content!");
  */
 function updateFileContent({ filePath, newContent }) {
