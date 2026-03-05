@@ -84,10 +84,10 @@ const deleteFileTool = createTool({
     ...registerParameter(
       "filePath",
       "string",
-      "The path of the file to update",
+      "The path of the file to delete",
     ),
   },
-  fn: ({ filePath }) => {
+  fn: ({ filePath }: { filePath: string }) => {
     deleteFile({ filePath });
     return `Files in directory ${filePath} has been deleted`;
   },
