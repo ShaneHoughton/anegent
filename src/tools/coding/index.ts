@@ -89,7 +89,7 @@ const deleteFileTool = createTool({
   },
   fn: ({ filePath }: { filePath: string }) => {
     deleteFile({ filePath });
-    return `Files in directory ${filePath} has been deleted`;
+    return `File at ${filePath} has been deleted`;
   },
   requireConfirmation: true,
 });
