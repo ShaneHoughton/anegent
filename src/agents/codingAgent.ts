@@ -6,7 +6,8 @@ import {
   IOpenAIChatCompletionsResponse,
   IOpenAIMessage,
 } from "../api/services/openai/types";
-import { Cli } from "../chat/interfaces/Cli";
+import { ChatInterface } from "../chat/ChatInterface";
+
 /**
  * Job implementation for the coding agent.
  */
@@ -52,7 +53,7 @@ class CodingAgent extends Agent<
   /**
    * Creates a new coding agent instance.
    */
-  constructor() {
+  constructor(chatInterface: ChatInterface) {
     const systemPrompt = [
       "You are a helpful coding assistant",
       "Always call a tool whenever you can to help the user with coding tasks",
@@ -64,7 +65,7 @@ class CodingAgent extends Agent<
       systemPrompt,
       new CodingAgentJob(),
       OpenAIServiceHander,
-      new Cli(),
+      chatInterface,
       codingTools,
     );
     this.displayMessage({ type: "respond", text: this.job.greet() });
