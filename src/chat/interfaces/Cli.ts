@@ -43,9 +43,9 @@ export class Cli implements ChatInterface {
    */
   async confirm(prompt: string): Promise<boolean> {
     const userResponse = await this.getUserInput(prompt);
-    const afirmatives = ["yes", "y", "yup", "yeah"];
+    const affirmatives = ["yes", "y", "yup", "yeah"];
     const cleanedResponse = userResponse.trim().toLocaleLowerCase();
-    return afirmatives.includes(cleanedResponse);
+    return affirmatives.includes(cleanedResponse);
   }
 
   /**
