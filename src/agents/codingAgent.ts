@@ -30,17 +30,6 @@ class CodingAgentJob extends AgentJob<IOpenAIMessage> {
   ): Promise<IAppMessage<IOpenAIMessage>[]> {
     return context;
   }
-
-  /**
-   * Processes agent responses.
-   * @param {string} response - The response text from the agent
-   * @returns {Promise<IAppMessage<IOpenAIMessage>[]>} Array of message objects
-   */
-  async onRespond(response: string): Promise<IAppMessage<IOpenAIMessage>[]> {
-    const messages: IAppMessage<IOpenAIMessage>[] = [];
-    messages.push({ role: "assistant", content: response });
-    return messages;
-  }
 }
 
 /**

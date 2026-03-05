@@ -103,12 +103,11 @@ export class Agent<TResponse, TServiceMessage> {
     const cleanup = this.displayMessage({
       type: "thinking",
     });
-    const response = await this.makeServiceRequest(messages);
+    const newMessages = await this.makeServiceRequest(messages);
     cleanup();
 
-    messages.push(...response);
     let toolCallsReceived = false;
-    for (const message of messages) {
+    for (const message of newMessages) {
       switch (message.role) {
         case "tool_call":
           if (message.toolCallInfo && message.apiMessageData) {
@@ -137,7 +136,7 @@ export class Agent<TResponse, TServiceMessage> {
             );
 
             message.toolCallInfo.isComplete = true;
-            messages.push(toolMessage);
+            newMessages.push(toolMessage);
           }
           break;
 
@@ -146,7 +145,7 @@ export class Agent<TResponse, TServiceMessage> {
           break;
       }
     }
-
+    messages.push(...newMessages)
     if (toolCallsReceived) {
       await this.actAndUpdateContext(messages);
     }

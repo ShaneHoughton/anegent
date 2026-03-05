@@ -104,7 +104,7 @@ export class ToolSet {
       if (
         foundTool.requireConfirmation &&
         !(await this.chatInterface?.confirm(
-          `Allow ${toolName} to be called with ${args}?: `,
+          `Allow ${toolName} to be called with ${JSON.stringify(args)} ?: `,
         ))
       ) {
         result = `Tool call for ${toolName} was cancelled by user. Ask for further instruction.`;
