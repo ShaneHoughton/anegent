@@ -34,7 +34,7 @@ export abstract class Service<TResponse, TServiceMessage> {
 
   /**
    * Maps system prompt to service-specific message format.
-   * @param {string} userPrompt - The user's input prompt
+   * @param {string} systemPrompt - The system prompt
    * @returns {IAppMessage<TServiceMessage>} Formatted service message
    */
   abstract mapSystemPromptToServiceMessage(

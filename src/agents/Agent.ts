@@ -1,7 +1,7 @@
-import { IAppMessage } from "../types";
+import { AIResponseConfig, IAppMessage } from "../types";
 import { AppServiceHandler } from "../api/ApiService";
 import { ToolSet } from "../tools/toolHelper";
-import { AIResponseConfig, ChatInterface } from "../chat/ChatInterface";
+import { ChatInterface } from "../chat/ChatInterface";
 
 /**
  * Base class for agent jobs that define agent behavior.
