@@ -1,19 +1,20 @@
+import { ChatInterface } from "../chat/ChatInterface";
 import { ITool, IToolDefinition, Parameter } from "./types";
 
-/**
- * Creates a tool definition with its function implementation.
- * @param {string} name - The name of the tool
- * @param {string} description - Description of what the tool does
- * @param {Record<string, Parameter>} parametersProps - The tool's parameter definitions
- * @param {function} fn - The function to execute when the tool is called
- * @returns {ITool} The complete tool object with definition and function
- */
-export function createTool(
-  name: string,
-  description: string,
-  parametersProps: Record<string, Parameter>,
-  fn: (args: any) => any
-): ITool {
+// todo
+export function createTool({
+  name,
+  description,
+  parametersProps,
+  fn,
+  requireConfirmation = false,
+}: {
+  name: string;
+  description: string;
+  parametersProps: Record<string, Parameter>;
+  fn: (args: any) => any;
+  requireConfirmation?: boolean;
+}): ITool {
   const requiredKeys = Object.keys(parametersProps);
   const definition: IToolDefinition = {
     type: "function",
@@ -30,6 +31,7 @@ export function createTool(
   return {
     fn,
     definition,
+    requireConfirmation,
   };
 }
 
@@ -45,7 +47,7 @@ export function registerParameter(
   name: string,
   type: string,
   description: string,
-  enumValues: string[] = []
+  enumValues: string[] = [],
 ): Record<string, Parameter> {
   const parameter: Parameter = {
     type,
@@ -61,15 +63,17 @@ export function registerParameter(
  * Manages a collection of tools and their execution.
  */
 export class ToolSet {
+  chatInterface: ChatInterface | null = null;
   tools: ITool[] = [];
-  functionsMap: Record<string, (args: any) => any> = {};
+  functionsMap: Record<string, ITool> = {};
   private cachedToolDefinitions: IToolDefinition[] | null = null;
 
   /**
    * Creates a new toolset with the given tools.
    * @param {ITool[]} tools - Array of tools to include in the toolset
    */
-  constructor(tools: ITool[]) {
+  constructor(tools: ITool[], chatInterface: ChatInterface | null = null) {
+    this.chatInterface = chatInterface;
     tools.forEach((tool) => this.addTool(tool));
   }
 
@@ -79,7 +83,7 @@ export class ToolSet {
    */
   addTool(tool: ITool) {
     this.tools.push(tool);
-    this.functionsMap[tool.definition.function.name] = tool.fn;
+    this.functionsMap[tool.definition.function.name] = tool;
     this.cachedToolDefinitions = null;
   }
 
@@ -89,9 +93,26 @@ export class ToolSet {
    * @param {any} args - Arguments to pass to the tool
    * @returns {any} The result from the tool execution
    */
-  callTool(toolName: string, args: any): any {
-    if (this.functionsMap[toolName]) {
-      return this.functionsMap[toolName](args);
+  async callTool(
+    toolName: string,
+    args: any,
+  ): Promise<{ success: boolean; result: unknown }> {
+    const foundTool = this.functionsMap[toolName];
+    let result = null;
+    let success = false;
+    if (foundTool) {
+      if (
+        foundTool.requireConfirmation &&
+        !(await this.chatInterface?.confirm(
+          `Allow ${toolName} to be called with ${JSON.stringify(args)} ?: `,
+        ))
+      ) {
+        result = `Tool call for ${toolName} was cancelled by user. Ask for further instruction.`;
+      } else {
+        result = await foundTool.fn(args);
+        success = true;
+      }
+      return { success, result };
     } else {
       throw new Error(`Tool "${toolName}" not found.`);
     }

@@ -21,37 +21,38 @@ class OpenAIService
   }
 
   /**
-   * Maps user and system prompts to OpenAI message format.
-   * @param {Object} params - The prompts to map
-   * @param {string} params.userPrompt - The user's input prompt
-   * @param {string} params.systemPrompt - The system prompt to guide behavior
-   * @returns {IAppMessage<IOpenAIMessage>[]} Array of formatted OpenAI messages
+   * Maps system prompt to OpenAI message format.
+   * @param {string} systemPrompt - The system prompt to guide behavior
+   * @returns {IAppMessage<IOpenAIMessage>} Formatted OpenAI message
    */
-  mapPromptToServiceMessages({
-    userPrompt,
-    systemPrompt,
-  }: {
-    userPrompt: string;
-    systemPrompt: string;
-  }): IAppMessage<IOpenAIMessage>[] {
-    return [
-      {
+  mapSystemPromptToServiceMessage(
+    systemPrompt: string,
+  ): IAppMessage<IOpenAIMessage> {
+    return {
+      role: "system",
+      content: systemPrompt,
+      apiMessageData: {
         role: "system",
         content: systemPrompt,
-        apiMessageData: {
-          role: "system",
-          content: systemPrompt,
-        },
       },
-      {
+    };
+  }
+  /**
+   * Maps user prompt to OpenAI message format.
+   * @param {string} userPrompt - The user prompt to guide behavior
+   * @returns {IAppMessage<IOpenAIMessage>} Formatted OpenAI message
+   */
+  mapUserPromptToServiceMessage(
+    userPrompt: string,
+  ): IAppMessage<IOpenAIMessage> {
+    return {
+      role: "user",
+      content: userPrompt,
+      apiMessageData: {
         role: "user",
         content: userPrompt,
-        apiMessageData: {
-          role: "user",
-          content: userPrompt,
-        },
       },
-    ];
+    };
   }
 
   /**

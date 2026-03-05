@@ -46,7 +46,7 @@ class ApiHandler {
         headers: request.headers,
         data: request.body,
         params: params,
-        timeout: 60000, // 60 seconds timeout
+        timeout: 60000 * 3, // 3 minute timeout
       });
       return response.data;
     } catch (error) {

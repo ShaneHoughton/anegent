@@ -20,4 +20,6 @@ export interface IToolDefinition {
 export interface ITool {
   definition: IToolDefinition;
   fn: (args: any) => any;
+  requireConfirmation?: boolean;
 }
+
