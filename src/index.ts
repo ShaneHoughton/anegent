@@ -14,7 +14,7 @@ const main = async (): Promise<void> => {
   const agent = new CodingAgent(cli);
   while (true) {
     const userRequest = await cli.sendMessage();
-    if (EXIT_COMMANDS.includes(userRequest.toLowerCase())) {
+    if (EXIT_COMMANDS.includes(userRequest.toLowerCase().trim())) {
       console.log("Exiting.");
       break;
     }
