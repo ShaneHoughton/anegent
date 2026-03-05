@@ -68,7 +68,7 @@ export class ToolSet {
   functionsMap: Record<string, ITool> = {};
   private cachedToolDefinitions: IToolDefinition[] | null = null;
 
-  /**ß
+  /**
    * Creates a new toolset with the given tools.
    * @param {ITool[]} tools - Array of tools to include in the toolset
    */
@@ -109,7 +109,7 @@ export class ToolSet {
       ) {
         result = `Tool call for ${toolName} was cancelled by user. Ask for further instruction.`;
       } else {
-        result = foundTool.fn(args);
+        result = await foundTool.fn(args);
         success = true;
       }
       return { success, result };
