@@ -1,5 +1,6 @@
+type TRoles = "user" | "assistant" | "system" | "tool" | "tool_call";
 export interface IAppMessage<T> {
-  role: string;
+  role: TRoles;
   content?: string;
   toolCallInfo?: IToolCallInfo;
   apiMessageData?: T;

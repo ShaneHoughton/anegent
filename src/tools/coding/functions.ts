@@ -26,6 +26,22 @@ export function createNewFile({
 }
 
 /**
+ * Deletes a file.
+ * @param {string} filePath - The path of the file to delete.
+ * @returns {string} A confirmation message that the file was deleted.
+ * deleteFile("./output/newFile.txt");
+ */
+export function deleteFile({ filePath }: { filePath: string }): string {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`\nFile does not exist: ${filePath}`);
+  }
+
+  fs.unlinkSync(filePath);
+  console.info(`\nFile deleted: ${filePath}`);
+  return `File deleted: ${filePath}`;
+}
+
+/**
  * Updates the content of an existing file.
  * @param {string} filePath - The path of the file to update.
  * @param {string} newContent - The new content to write to the file.

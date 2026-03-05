@@ -1,7 +1,7 @@
-import { IAppMessage, IToolCallInfo } from "../types";
+import { IAppMessage } from "../types";
 import { AppServiceHandler } from "../api/ApiService";
 import { ToolSet } from "../tools/toolHelper";
-import { logAIResponse, AIResponseConfig } from "../ui/CliArt";
+import { AIResponseConfig, ChatInterface } from "../chat/ChatInterface";
 
 /**
  * Base class for agent jobs that define agent behavior.
@@ -15,17 +15,18 @@ export abstract class AgentJob<TServiceMessage> {
   /**
    * Handles and processes the message context.
    * @param {IAppMessage<TServiceMessage>[]} context - Array of messages to process
-   * @returns {IAppMessage<TServiceMessage>[]} Processed array of messages
+   * @returns {Promise<IAppMessage<TServiceMessage>[]>} Processed array of messages
    */
   abstract handleContext(
     context: IAppMessage<TServiceMessage>[],
-  ): IAppMessage<TServiceMessage>[];
+  ): Promise<IAppMessage<TServiceMessage>[]>;
 }
 
 /**
  * Main agent class that orchestrates AI interactions with tool support.
  */
 export class Agent<TResponse, TServiceMessage> {
+  chatInterface: ChatInterface;
   systemPrompt: string;
   job: AgentJob<TServiceMessage>;
   serviceHandler: AppServiceHandler<TResponse, TServiceMessage>;
@@ -43,12 +44,18 @@ export class Agent<TResponse, TServiceMessage> {
     systemPrompt: string,
     job: AgentJob<TServiceMessage>,
     serviceHandler: AppServiceHandler<TResponse, TServiceMessage>,
+    chatInterface: ChatInterface,
     toolset?: ToolSet,
   ) {
     this.systemPrompt = systemPrompt;
     this.job = job;
     this.serviceHandler = serviceHandler;
+    this.chatInterface = chatInterface;
     this.toolset = toolset ?? new ToolSet([]);
+    this.toolset.chatInterface = chatInterface;
+    this.context.push(
+      this.serviceHandler.formatSystemPromptMessage(this.systemPrompt),
+    );
   }
 
   /**
@@ -57,7 +64,7 @@ export class Agent<TResponse, TServiceMessage> {
    * @returns {Object} Object with cleanupInterval method to stop animations
    */
   displayMessage(messageConfig: AIResponseConfig) {
-    return logAIResponse({ ...messageConfig });
+    return this.chatInterface.receiveResponse(messageConfig);
   }
 
   /**
@@ -66,12 +73,11 @@ export class Agent<TResponse, TServiceMessage> {
    * @returns {Promise<void>}
    */
   async prompt(userPrompt: string) {
-    const initialMessages = this.serviceHandler.formatPromptMessages(
-      userPrompt,
-      this.systemPrompt,
-    );
-    await this.act(initialMessages);
-    this.context = [];
+    const userMessage = this.serviceHandler.formatUserPromptMessage(userPrompt);
+    this.context = [...this.context, userMessage];
+    await this.actAndUpdateContext(this.context);
+    const returned = await this.job.handleContext(this.context);
+    this.context = returned;
   }
 
   /**
@@ -87,16 +93,18 @@ export class Agent<TResponse, TServiceMessage> {
   }
 
   /**
-   * Executes agent actions including tool calls and message processing.
+   * Executes agent actions including tool calls and message processing and updates the context with the messages.
    * @param {IAppMessage<TServiceMessage>[]} messages - Messages to process
    * @returns {Promise<void>}
    */
-  async act(messages: IAppMessage<TServiceMessage>[]) {
+  async actAndUpdateContext(
+    messages: IAppMessage<TServiceMessage>[],
+  ): Promise<void> {
     const cleanup = this.displayMessage({
       type: "thinking",
     });
     const response = await this.makeServiceRequest(messages);
-    cleanup.cleanupInterval();
+    cleanup();
 
     messages.push(...response);
     let toolCallsReceived = false;
@@ -111,15 +119,20 @@ export class Agent<TResponse, TServiceMessage> {
             }
 
             toolCallsReceived = true;
-            const toolCallResult = await this.toolset.callTool(toolName, args);
+            const { success, result } = await this.toolset.callTool(
+              toolName,
+              args,
+            );
 
-            this.displayMessage({
-              type: "action",
-              text: `Called tool ${toolName}...`,
-            });
+            if (success) {
+              this.displayMessage({
+                type: "action",
+                text: `Called tool ${toolName}...`,
+              });
+            }
 
             const toolMessage = this.serviceHandler.formatToolMessage(
-              JSON.stringify({ result: toolCallResult }),
+              JSON.stringify({ result }),
               toolCallInfo,
             );
 
@@ -135,7 +148,8 @@ export class Agent<TResponse, TServiceMessage> {
     }
 
     if (toolCallsReceived) {
-      await this.act(messages);
+      await this.actAndUpdateContext(messages);
     }
+    this.context = messages;
   }
 }

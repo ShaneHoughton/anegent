@@ -33,19 +33,22 @@ export abstract class Service<TResponse, TServiceMessage> {
   ): Promise<IAppMessage<TServiceMessage>[]>;
 
   /**
-   * Maps user and system prompts to service-specific message format.
-   * @param {Object} params - The prompts to map
-   * @param {string} params.userPrompt - The user's input prompt
-   * @param {string} params.systemPrompt - The system prompt to guide behavior
-   * @returns {IAppMessage<TServiceMessage>[]} Array of formatted messages
+   * Maps system prompt to service-specific message format.
+   * @param {string} userPrompt - The user's input prompt
+   * @returns {IAppMessage<TServiceMessage>} Formatted service message
    */
-  abstract mapPromptToServiceMessages({
-    userPrompt,
-    systemPrompt,
-  }: {
-    userPrompt: string;
-    systemPrompt: string;
-  }): IAppMessage<TServiceMessage>[];
+  abstract mapSystemPromptToServiceMessage(
+    systemPrompt: string,
+  ): IAppMessage<TServiceMessage>;
+
+  /**
+   * Maps user prompt to service-specific message format.
+   * @param {string} userPrompt - The user's input prompt
+   * @returns {IAppMessage<TServiceMessage>} Formatted service message
+   */
+  abstract mapUserPromptToServiceMessage(
+    userPrompt: string,
+  ): IAppMessage<TServiceMessage>;
 
   /**
    * Maps tool call results to service-specific message format.
@@ -78,22 +81,29 @@ export class AppServiceHandler<TResponse, TServiceMessage> {
   }
 
   /**
-   * Formats user and system prompts into service messages.
+   * Formats user prompt into a service message.
    * @param {string} userPrompt - The user's input prompt
-   * @param {string} systemPrompt - The system prompt to guide behavior
-   * @returns {IAppMessage<TServiceMessage>[]} Array of formatted messages
+   * @returns {IAppMessage<TServiceMessage>} formatted message
    */
-  formatPromptMessages(
-    userPrompt: string,
-    systemPrompt: string,
-  ): IAppMessage<TServiceMessage>[] {
+  formatUserPromptMessage(userPrompt: string): IAppMessage<TServiceMessage> {
     if (!this.service) {
       throw new Error("Service not initialized");
     }
-    return this.service?.mapPromptToServiceMessages({
-      userPrompt,
-      systemPrompt,
-    });
+    return this.service?.mapUserPromptToServiceMessage(userPrompt);
+  }
+
+  /**
+   * Formats system prompt into a service message.
+   * @param {string} systemPrompt - The system prompt
+   * @returns {IAppMessage<TServiceMessage>} formatted message
+   */
+  formatSystemPromptMessage(
+    systemPrompt: string,
+  ): IAppMessage<TServiceMessage> {
+    if (!this.service) {
+      throw new Error("Service not initialized");
+    }
+    return this.service?.mapSystemPromptToServiceMessage(systemPrompt);
   }
 
   /**

@@ -2,8 +2,11 @@ import { IAppMessage } from "../types";
 import { AgentJob, Agent } from "./Agent";
 import codingTools from "../tools/coding";
 import OpenAIServiceHander from "../api/services/openai/handler";
-import { IOpenAIChatCompletionsResponse, IOpenAIMessage } from "../api/services/openai/types";
-
+import {
+  IOpenAIChatCompletionsResponse,
+  IOpenAIMessage,
+} from "../api/services/openai/types";
+import { Cli } from "../chat/interfaces/Cli";
 /**
  * Job implementation for the coding agent.
  */
@@ -21,8 +24,10 @@ class CodingAgentJob extends AgentJob<IOpenAIMessage> {
    * @param {IAppMessage<IOpenAIMessage>[]} context - Array of messages to process
    * @returns {IAppMessage<IOpenAIMessage>[]} Processed array of messages
    */
-  handleContext(context: IAppMessage<IOpenAIMessage>[]): IAppMessage<IOpenAIMessage>[] {
-    return [...context];
+  async handleContext(
+    context: IAppMessage<IOpenAIMessage>[],
+  ): Promise<IAppMessage<IOpenAIMessage>[]> {
+    return context;
   }
 
   /**
@@ -40,7 +45,10 @@ class CodingAgentJob extends AgentJob<IOpenAIMessage> {
 /**
  * Agent specialized for coding tasks with file manipulation capabilities.
  */
-class CodingAgent extends Agent<IOpenAIChatCompletionsResponse, IOpenAIMessage> {
+class CodingAgent extends Agent<
+  IOpenAIChatCompletionsResponse,
+  IOpenAIMessage
+> {
   /**
    * Creates a new coding agent instance.
    */
@@ -52,7 +60,13 @@ class CodingAgent extends Agent<IOpenAIChatCompletionsResponse, IOpenAIMessage> 
       "Avoid redundant tool calls",
     ].join(".");
 
-    super(systemPrompt, new CodingAgentJob(), OpenAIServiceHander, codingTools);
+    super(
+      systemPrompt,
+      new CodingAgentJob(),
+      OpenAIServiceHander,
+      new Cli(),
+      codingTools,
+    );
     this.displayMessage({ type: "respond", text: this.job.greet() });
   }
 }
