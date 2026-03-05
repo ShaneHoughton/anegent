@@ -61,7 +61,7 @@ export class Agent<TResponse, TServiceMessage> {
   /**
    * Displays a message to the user interface.
    * @param {AIResponseConfig} messageConfig - Configuration for the message display
-   * @returns {Object} Object with cleanupInterval method to stop animations
+   * @returns {() => void} Cleanup function to stop animations
    */
   displayMessage(messageConfig: AIResponseConfig) {
     return this.chatInterface.receiveResponse(messageConfig);
@@ -145,7 +145,7 @@ export class Agent<TResponse, TServiceMessage> {
           break;
       }
     }
-    messages.push(...newMessages)
+    messages.push(...newMessages);
     if (toolCallsReceived) {
       await this.actAndUpdateContext(messages);
     }
