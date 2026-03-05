@@ -19,11 +19,11 @@ class OpenAIService
   constructor(url: string, model: string, apiKey: string) {
     super(url, model, apiKey);
   }
-  
+
   /**
    * Maps system prompt to OpenAI message format.
    * @param {string} systemPrompt - The system prompt to guide behavior
-   * @returns {IAppMessage<IOpenAIMessage>} Formatted OpenAI system message
+   * @returns {IAppMessage<IOpenAIMessage>} Formatted OpenAI message
    */
   mapSystemPromptToServiceMessage(
     systemPrompt: string,
@@ -40,7 +40,7 @@ class OpenAIService
   /**
    * Maps user prompt to OpenAI message format.
    * @param {string} userPrompt - The user prompt to guide behavior
-   * @returns {IAppMessage<IOpenAIMessage>} Formatted OpenAI system message
+   * @returns {IAppMessage<IOpenAIMessage>} Formatted OpenAI message
    */
   mapUserPromptToServiceMessage(
     userPrompt: string,
