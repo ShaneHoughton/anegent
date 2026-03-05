@@ -1,3 +1,5 @@
+import { AIResponseConfig } from "../types";
+
 /**
  * Logs colored text to the console.
  * @param {string} artStr - The text to display
@@ -17,12 +19,6 @@ const colorLog = (artStr: string, color = "cyan") => {
   console.info("\n");
   console.log(`\x1b[${selectedColor}m${artStr}\x1b[0m`);
 };
-
-export interface AIResponseConfig {
-  type: "respond" | "thinking" | "action" | "error";
-  text?: string;
-  shouldAnimate?: boolean;
-}
 
 /**
  * Displays AI responses with visual formatting and animations.

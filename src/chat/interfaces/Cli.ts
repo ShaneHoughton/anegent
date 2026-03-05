@@ -1,7 +1,7 @@
 import readline from "readline";
-import { logAIResponse, AIResponseConfig } from "../../ui/CliArt";
-
+import { logAIResponse } from "../../ui/CliArt";
 import { ChatInterface } from "../ChatInterface";
+import { AIResponseConfig } from "../../types";
 
 /**
  * Command-line interface implementation for chat interactions.

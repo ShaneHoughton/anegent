@@ -1,8 +1,4 @@
-export interface AIResponseConfig {
-  type: "respond" | "thinking" | "action" | "error";
-  text?: string;
-  shouldAnimate?: boolean;
-}
+import { AIResponseConfig } from "../types";
 
 /**
  * Abstract base class for chat interface implementations.

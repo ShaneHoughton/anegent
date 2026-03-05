@@ -5,10 +5,14 @@ export interface IAppMessage<T> {
   toolCallInfo?: IToolCallInfo;
   apiMessageData?: T;
 }
-
 export interface IToolCallInfo {
   callId: string;
   isComplete: boolean;
   toolName: string;
   args: Record<string, unknown>;
+}
+export interface AIResponseConfig {
+  type: "respond" | "thinking" | "action" | "error";
+  text?: string;
+  shouldAnimate?: boolean;
 }
